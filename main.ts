@@ -23,7 +23,12 @@
  * @throws {Error} If there are unmatched quotes or incomplete escape sequences.
  */
 export function stringsFromLine(line: string): string[] {
-  type State = "normal" | "inQuotes" | "escaped" | "escapedInQuotes";
+  type State =
+    | "normal"
+    | "afterQuotes"
+    | "inQuotes"
+    | "escaped"
+    | "escapedInQuotes";
 
   let currentString = "";
   let currentState: State = "normal";
@@ -55,14 +60,22 @@ export function stringsFromLine(line: string): string[] {
     normal: {
       actions: {
         " ": [flushCurrentNonEmpty, "normal"],
-        '"': [flushCurrentNonEmpty, "inQuotes"],
+        '"': [null, "inQuotes"],
+        "\\": [null, "escaped"],
+      },
+      defaultAction: [addChar, "normal"],
+    },
+    afterQuotes: {
+      actions: {
+        " ": [flushCurrent, "normal"],
+        '"': [null, "inQuotes"],
         "\\": [null, "escaped"],
       },
       defaultAction: [addChar, "normal"],
     },
     inQuotes: {
       actions: {
-        '"': [flushCurrent, "normal"],
+        '"': [null, "afterQuotes"],
         "\\": [null, "escapedInQuotes"],
       },
       defaultAction: [addChar, "inQuotes"],
@@ -89,7 +102,7 @@ export function stringsFromLine(line: string): string[] {
   if (currentState === "escaped" || currentState === "escapedInQuotes")
     throw new Error("incomplete escape sequence");
 
-  flushCurrentNonEmpty();
+  currentState === "afterQuotes" ? flushCurrent() : flushCurrentNonEmpty();
 
   return result;
 }

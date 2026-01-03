@@ -62,15 +62,16 @@ Deno.test("Double quotes processing.", async (t) => {
   );
 });
 
-Deno.test("Adjacent quoted/normal areas", async (t) => {
-  await t.step("Two adjacent quoted areas splits into two strings.", () => {
-    assertEquals(stringsFromLine('"c d""ef"'), ["c d", "ef"]);
+Deno.test("Adjacent quoted/unquoted areas", async (t) => {
+  await t.step("Two adjacent quoted areas result in one string.", () => {
+    assertEquals(stringsFromLine('"c d""ef"'), ["c def"]);
+    assertEquals(stringsFromLine('""""'), [""]);
   });
   await t.step(
-    "Adjacent quoted area and normal one splits into two strings.",
+    "Adjacent quoted area and unquoted one result in one string.",
     () => {
-      assertEquals(stringsFromLine('cd"ef"'), ["cd", "ef"]);
-      assertEquals(stringsFromLine('"ef"gh'), ["ef", "gh"]);
+      assertEquals(stringsFromLine('cd"ef"'), ["cdef"]);
+      assertEquals(stringsFromLine('"e f"gh'), ["e fgh"]);
     }
   );
 });
